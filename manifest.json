@@ -1,0 +1,17 @@
+{
+  "name": "La Buti del Marc",
+  "short_name": "La Buti",
+  "description": "El millor joc de la botifarra.",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#042f2e",
+  "theme_color": "#042f2e",
+  "icons": [
+    {
+      "src": "icona.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
