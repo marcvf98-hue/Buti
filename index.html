@@ -288,6 +288,15 @@
             }
         }
 
+        // --- CALCULA EL MULTIPLICADOR FINAL (INCLOU BOTIFARRA x2) ---
+        function obtenirMultiplicadorFinal() {
+            let mult = Math.pow(2, window.nivellContro);
+            if (window.triomfActual === 'Botifarra') {
+                mult *= 2;
+            }
+            return mult;
+        }
+
         function iniciarRepartimentDePartida() {
             prepararBaralla(); 
             const cartaSorteig = window.baralla[Math.floor(Math.random() * window.baralla.length)];
@@ -431,8 +440,8 @@
         };
 
         function actualitzarIndicadorTriomf() {
-            const multiplicador = Math.pow(2, window.nivellContro); 
-            const textMul = window.nivellContro > 0 ? ` <span style="color:var(--vermell); font-weight:800; margin-left:6px;">x${multiplicador}</span>` : '';
+            const multiplicador = obtenirMultiplicadorFinal();
+            const textMul = multiplicador > 1 ? ` <span style="color:var(--vermell); font-weight:800; margin-left:6px;">x${multiplicador}</span>` : '';
             
             const isDelegat = window.jugadorQueCanta !== window.jugadorQueReparteix;
             const textDelegat = isDelegat ? `<div style="display:inline-block; width:16px; height:16px; margin-left:4px; opacity:0.8;">${SVG_RETURN}</div>` : '';
@@ -458,10 +467,12 @@
             document.body.appendChild(indicador);
         }
 
-        function calcularPuntsMa(maBot) { return maBot.reduce((sum, c) => sum + c.punts, 0); }
-
         function gestionarFaseContro() {
             if (window.nivellContro === 3) { iniciarTorn(); return; } 
+            
+            // Per saber quin multiplicador demanem als botons
+            let baseMult = (window.triomfActual === 'Botifarra') ? 2 : 1;
+
             if (window.nivellContro === 0) {
                 if (window.equipQueCanta === 'Nosaltres') {
                     if (calcularPuntsMa(window.maEst) > 16 || calcularPuntsMa(window.maOest) > 16) executarContro('Ells', 1);
@@ -469,7 +480,7 @@
                 } else {
                     document.getElementById('titol-contro').innerHTML = `Han cantat ${window.triomfActual}. Vols contrar?`;
                     const btn = document.getElementById('btn-fer-contro'); btn.className = 'boto-accio boto-vermell'; 
-                    btn.innerHTML = `<div class="icona-boto">${SVG_CONTRO}</div> Contrar (x2)`;
+                    btn.innerHTML = `<div class="icona-boto">${SVG_CONTRO}</div> Contrar (x${baseMult * 2})`;
                     document.getElementById('menu-contro').style.display = 'flex';
                 }
             } 
@@ -480,7 +491,7 @@
                 } else {
                     document.getElementById('titol-contro').innerText = "Us han contrat! Vols recontrar?";
                     const btn = document.getElementById('btn-fer-contro'); btn.className = 'boto-accio boto-vermell'; 
-                    btn.innerHTML = `<div class="icona-boto">${SVG_CONTRO}</div> Recontrar (x4)`;
+                    btn.innerHTML = `<div class="icona-boto">${SVG_CONTRO}</div> Recontrar (x${baseMult * 4})`;
                     document.getElementById('menu-contro').style.display = 'flex';
                 }
             }
@@ -491,7 +502,7 @@
                 } else {
                     document.getElementById('titol-contro').innerText = "Han recontrat! Vols fer Sant Vicenç?";
                     const btn = document.getElementById('btn-fer-contro'); btn.className = 'boto-accio boto-groc'; 
-                    btn.innerHTML = `<div class="icona-boto">${SVG_CONTRO}</div> Sant Vicenç (x8)`;
+                    btn.innerHTML = `<div class="icona-boto">${SVG_CONTRO}</div> Sant Vicenç (x${baseMult * 8})`;
                     document.getElementById('menu-contro').style.display = 'flex';
                 }
             }
@@ -548,12 +559,20 @@
                 return true;
             } else {
                 if (!companyGuanya && teTriomf) {
-                    if (cartaTest.pal !== window.triomfActual) return false; 
                     if (jugadaGuanyadora.carta.pal === window.triomfActual) {
-                        const potSubmuntar = maJugador.some(c => c.pal === window.triomfActual && c.forca > jugadaGuanyadora.carta.forca);
-                        if (potSubmuntar && cartaTest.forca <= jugadaGuanyadora.carta.forca) return false;
+                        const potSobreFallar = maJugador.some(c => c.pal === window.triomfActual && c.forca > jugadaGuanyadora.carta.forca);
+                        if (potSobreFallar) {
+                            if (cartaTest.pal !== window.triomfActual || cartaTest.forca <= jugadaGuanyadora.carta.forca) return false;
+                            return true;
+                        } else {
+                            const nomesTeTrumfos = maJugador.every(c => c.pal === window.triomfActual);
+                            if (!nomesTeTrumfos && cartaTest.pal === window.triomfActual) return false;
+                            return true; 
+                        }
+                    } else {
+                        if (cartaTest.pal !== window.triomfActual) return false;
+                        return true;
                     }
-                    return true;
                 }
                 return true; 
             }
@@ -640,7 +659,9 @@
                 
                 if (window.maSud.length === 0 && window.maNord.length === 0) {
                     document.getElementById('missatge-tauler').style.display = "none"; 
-                    let resumText = ""; let puntsNets = 0; let mult = Math.pow(2, window.nivellContro);
+                    let resumText = ""; 
+                    let mult = obtenirMultiplicadorFinal();
+                    let puntsNets = 0; 
                     
                     if (window.puntsNosaltres > 36) {
                         puntsNets = (window.puntsNosaltres - 36) * mult; window.puntsGlobalsNosaltres += puntsNets;
