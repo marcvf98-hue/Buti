@@ -80,6 +80,8 @@
         #marcador-punts { position: absolute; top: 10px; right: 15px; display: none; z-index: 100; flex-direction: column; text-align: right; }
         #btn-obrir-stats { position: absolute; top: 10px; left: 15px; z-index: 150; cursor: pointer; padding: 8px 12px; background: rgba(0,0,0,0.5); }
         #btn-obrir-stats:active { transform: scale(0.95); }
+        #btn-registre { position: absolute; top: 10px; left: 100px; z-index: 150; cursor: pointer; padding: 8px 12px; background: rgba(0,0,0,0.5); }
+        #btn-registre:active { transform: scale(0.95); }
         #missatge-tauler {
             position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
             font-size: 0.9rem; font-weight: 500; text-align: center; color: #fff;
@@ -166,6 +168,7 @@
 
 <div id="zona-nord">
     <div class="placa-info" id="btn-obrir-stats" onclick="obrirEstadistiques()">📊 Fitxa</div>
+    <div class="placa-info" id="btn-registre" onclick="descarregarRegistre()">📋 Registre</div>
     <div class="placa-info" id="info-nord">Nord: 0</div>
     <div id="marcador-global" class="placa-info" style="border-radius:12px; padding:4px 16px;">
         <div class="titol-marcador">Objectiu: 101 pts</div>
@@ -284,6 +287,10 @@
         // [v1.1] Memòria de cartes jugades — es reseteja cada mà
         window.cartesJugades = [];
 
+        // [v1.1] Registre complet de la partida
+        window.registrePartida = [];   // array de mans
+        window.manActual = null;       // objecte de la mà en curs
+
         window.obtenirForca = function(n) { if(n===9) return 12; if(n===1) return 11; if(n===12) return 10; if(n===11) return 9; if(n===10) return 8; return n-1; };
         window.obtenirPunts = function(n) { switch(n) { case 9: return 5; case 1: return 4; case 12: return 3; case 11: return 2; case 10: return 1; default: return 0; } };
 
@@ -396,10 +403,34 @@
             if (score > millorScore) { millorScore = score; millorPal = pal.nom; }
         }
 
-        // Considerar Botifarra: si els punts estan repartits i té moltes cartes altes
+        // [v1.1] Regla real de Botifarra:
+        // Canta Botifarra si: 2+ manilles I punts > 20
+        // PERÒ NO si tens un "as vulnerable" a algun pal:
+        //   - Semifallo amb as: exactament 1 carta del pal i és un as
+        //   - As penjat: 2 cartes del pal, una és l'as, i l'altra té forca molt inferior (diff > 6)
         const totalPunts = calcularPuntsMa(ma);
         const numManilles = ma.filter(c => c.numero === 9).length;
-        if (totalPunts >= 18 || numManilles >= 2) return 'Botifarra';
+
+        if (numManilles >= 2 && totalPunts > 20) {
+            const teAsVulnerable = window.PALS.some(pal => {
+                const cartesDePal = ma.filter(c => c.pal === pal.nom);
+                const asDelPal = cartesDePal.find(c => c.numero === 1); // forca 11
+                if (!asDelPal) return false; // no hi ha as, no vulnerable
+
+                // Semifallo amb as: l'as és l'única carta del pal
+                if (cartesDePal.length === 1) return true;
+
+                // As penjat: 2 cartes i l'altra té forca molt baixa (diferència > 6)
+                if (cartesDePal.length === 2) {
+                    const altra = cartesDePal.find(c => c.numero !== 1);
+                    if (asDelPal.forca - altra.forca > 6) return true;
+                }
+
+                return false;
+            });
+
+            if (!teAsVulnerable) return 'Botifarra';
+        }
 
         return millorPal || 'Oros';
     }
@@ -474,6 +505,26 @@
         window.maOest = window.baralla.splice(0, 12);
         window.maSud.sort((a, b) => a.pal !== b.pal ? a.pal.localeCompare(b.pal) : b.forca - a.forca);
 
+        // [v1.1] Crear l'objecte de la mà nova al registre, amb les mans inicials
+        window.manActual = {
+            numero: window.registrePartida.length + 1,
+            reparteix: window.jugadorQueReparteix,
+            mansInicials: {
+                Sud:  window.maSud.map(c => `${c.numero}${c.pal[0]}`),
+                Est:  window.maEst.map(c => `${c.numero}${c.pal[0]}`),
+                Nord: window.maNord.map(c => `${c.numero}${c.pal[0]}`),
+                Oest: window.maOest.map(c => `${c.numero}${c.pal[0]}`)
+            },
+            triomf: null,
+            cantador: null,
+            nivellContro: 0,
+            bases: [],
+            puntsNosaltres: 0,
+            puntsElls: 0,
+            puntsGlobalsNosaltres: 0,
+            puntsGlobalsElls: 0
+        };
+
         let startIdx = window.ORDRE_TORNS.indexOf(window.tornActual);
         let ordre = [0,1,2,3].map(i => window.ORDRE_TORNS[(startIdx + i) % 4]);
         let cartesRepartides = { 'Sud': 0, 'Est': 0, 'Nord': 0, 'Oest': 0 };
@@ -544,6 +595,12 @@
         window.nivellContro = 0;
         document.getElementById('menu-cantar').style.display = 'none';
         document.getElementById('marcador-punts').style.display = 'flex';
+
+        // [v1.1] Registrar triomf i cantador a la mà actual
+        if (window.manActual) {
+            window.manActual.triomf = nomPal;
+            window.manActual.cantador = cantador;
+        }
         actualitzarIndicadorTriomf();
         const textCant = cantador === 'Sud' ? 'Has' : `${cantador} ha`;
         const msj = document.getElementById('missatge-tauler');
@@ -771,13 +828,59 @@
         // [v1.1] El COMPANY VA GUANYANT
         if (jugadaGuanyadora.jugador === nomCompany) {
             // [v1.1] Comprova si el company guanya de forma SEGURA
-            // (ningú més pot superar-li — usant memòria de cartes)
             const companyGuanyaSegur = esLaMesAltaRestant(jugadaGuanyadora.carta) ||
                 (window.triomfActual !== 'Botifarra' && jugadaGuanyadora.carta.pal === window.triomfActual &&
                  !window.cartesBasa.some(j => j.jugador !== nomCompany && j.carta.pal === window.triomfActual && j.carta.forca > jugadaGuanyadora.carta.forca));
 
+            // Detectem si estem en situació de "falla del company":
+            // el company ha fallat amb triomf perquè tampoc tenia el pal de sortida
+            const palSortida = window.cartesBasa[0].carta.pal;
+            const companyHaFallat = window.triomfActual !== 'Botifarra' &&
+                jugadaGuanyadora.carta.pal === window.triomfActual &&
+                palSortida !== window.triomfActual;
+
+            if (companyHaFallat) {
+                // El company ha fallat amb triomf i guanya → NO hem de malgastar triomfs.
+                // Estratègia: descartar-nos d'un pal curt per crear buits futurs.
+                // Prioritat: pal amb 1 sola carta sense punts → pal amb 2 cartes sense punts
+                //            → palla genèrica → si tot té punts, la carta amb menys punts
+                // MAI tirar triomf si hi ha alternativa.
+                const maBotSencer = (nomJugador === 'Est') ? window.maEst : (nomJugador === 'Nord') ? window.maNord : window.maOest;
+
+                // Opció 1: carta sense punts de pal amb 1 sola carta (buit immediat)
+                const palsAmbUna = window.PALS
+                    .filter(p => p.nom !== window.triomfActual)
+                    .map(p => ({ pal: p.nom, cartes: maBotSencer.filter(c => c.pal === p.nom) }))
+                    .filter(p => p.cartes.length === 1 && p.cartes[0].punts === 0);
+                if (palsAmbUna.length > 0) return palsAmbUna[0].cartes[0];
+
+                // Opció 2: carta sense punts de pal amb 2 cartes (buit proper)
+                const palsAmbDues = window.PALS
+                    .filter(p => p.nom !== window.triomfActual)
+                    .map(p => ({ pal: p.nom, cartes: maBotSencer.filter(c => c.pal === p.nom) }))
+                    .filter(p => p.cartes.length === 2 && p.cartes.some(c => c.punts === 0));
+                if (palsAmbDues.length > 0) {
+                    const palles = palsAmbDues[0].cartes.filter(c => c.punts === 0);
+                    palles.sort((a, b) => a.forca - b.forca);
+                    return palles[0];
+                }
+
+                // Opció 3: qualsevol palla sense triomf
+                const pallaSenseTriomf = cartesLegals.filter(c => c.punts === 0 && c.pal !== window.triomfActual);
+                if (pallaSenseTriomf.length > 0) {
+                    pallaSenseTriomf.sort((a, b) => a.forca - b.forca);
+                    return pallaSenseTriomf[0];
+                }
+
+                // Opció 4: forçats a tirar punts → la menys valuosa i mai triomf si podem evitar-ho
+                const senseTriomf = cartesLegals.filter(c => c.pal !== window.triomfActual);
+                const candidats = senseTriomf.length > 0 ? senseTriomf : cartesLegals;
+                candidats.sort((a, b) => a.punts - b.punts || a.forca - b.forca);
+                return candidats[0];
+            }
+
             if (companyGuanyaSegur) {
-                // Company guanya segur: tirem el màxim de punts
+                // Company guanya segur (no per triomf): tirem el màxim de punts
                 cartesLegals.sort((a, b) => b.punts - a.punts || a.forca - b.forca);
             } else {
                 // Company guanya però podria ser superat: tirem punts moderats
@@ -850,6 +953,20 @@
             // [v1.1] Registrem les cartes jugades a la memòria ABANS de buidar la basa
             window.cartesJugades.push(...window.cartesBasa.map(j => j.carta));
 
+            // [v1.1] Afegir la basa al registre de la mà
+            if (window.manActual) {
+                window.manActual.bases.push({
+                    numero: window.manActual.bases.length + 1,
+                    lider: window.cartesBasa[0].jugador,
+                    jugades: window.cartesBasa.map(j => ({
+                        jugador: j.jugador,
+                        carta: `${j.carta.numero} de ${j.carta.pal}`
+                    })),
+                    guanyador: jugadaGuanyadora.jugador,
+                    punts: puntsBasa
+                });
+            }
+
             document.querySelectorAll('.carta-jugada').forEach(c => c.remove());
             window.cartesBasa = [];
 
@@ -873,6 +990,17 @@
 
                 document.getElementById('global-nosaltres').innerText = window.puntsGlobalsNosaltres;
                 document.getElementById('global-ells').innerText = window.puntsGlobalsElls;
+
+                // [v1.1] Tancar la mà al registre i afegir-la a la partida
+                if (window.manActual) {
+                    window.manActual.nivellContro = window.nivellContro;
+                    window.manActual.puntsNosaltres = window.puntsNosaltres;
+                    window.manActual.puntsElls = window.puntsElls;
+                    window.manActual.puntsGlobalsNosaltres = window.puntsGlobalsNosaltres;
+                    window.manActual.puntsGlobalsElls = window.puntsGlobalsElls;
+                    window.registrePartida.push(window.manActual);
+                    window.manActual = null;
+                }
 
                 const botoSeg = document.getElementById('boto-seguent-ma');
 
@@ -959,6 +1087,105 @@
             passarTorn();
         }, 300);
     }
+
+    // ================================================================
+    // [v1.1] REGISTRE DE PARTIDA — Genera i descarrega un fitxer .txt
+    // ================================================================
+    window.descarregarRegistre = function() {
+        const mans = [...window.registrePartida];
+        // Incloure la mà en curs si existeix (partida no acabada)
+        if (window.manActual && window.manActual.bases.length > 0) {
+            mans.push({ ...window.manActual, enCurs: true });
+        }
+
+        if (mans.length === 0) {
+            alert("Encara no hi ha cap mà registrada.");
+            return;
+        }
+
+        const sep  = "═".repeat(60);
+        const sep2 = "─".repeat(60);
+        const nomCarta = str => str; // ja ve formatat com "9 de Oros"
+
+        let txt = "";
+        txt += "╔" + "═".repeat(58) + "╗\n";
+        txt += "║" + "  LA BUTI DEL MARC — REGISTRE DE PARTIDA".padEnd(58) + "║\n";
+        txt += "║" + `  Data: ${new Date().toLocaleString('ca-ES')}`.padEnd(58) + "║\n";
+        txt += "╚" + "═".repeat(58) + "╝\n\n";
+
+        mans.forEach(ma => {
+            const nCtrl = ["—", "Contro x2", "Recontro x4", "Sant Vicenç x8"][ma.nivellContro || 0];
+            const mult  = Math.pow(2, ma.nivellContro || 0) * (ma.triomf === 'Botifarra' ? 2 : 1);
+
+            txt += sep + "\n";
+            txt += `  MÀ #${ma.numero}${ma.enCurs ? " (en curs)" : ""}  |  Reparteix: ${ma.reparteix}\n`;
+            txt += sep + "\n";
+
+            // Triomf i contro
+            txt += `  Triomf : ${ma.triomf || "?"}\n`;
+            txt += `  Canta  : ${ma.cantador || "?"}\n`;
+            txt += `  Contro : ${nCtrl}  (x${mult})\n\n`;
+
+            // Mans inicials
+            if (ma.mansInicials) {
+                txt += "  MANS INICIALS:\n";
+                const ordre = ['Sud (Tu)', 'Nord', 'Est', 'Oest'];
+                const claus = ['Sud', 'Nord', 'Est', 'Oest'];
+                claus.forEach((k, i) => {
+                    const cartes = (ma.mansInicials[k] || []).join("  ");
+                    txt += `    ${ordre[i].padEnd(10)}: ${cartes}\n`;
+                });
+                txt += "\n";
+            }
+
+            // Bases
+            txt += "  BASES:\n";
+            ma.bases.forEach(b => {
+                txt += `  ${sep2.slice(0, 40)}\n`;
+                txt += `  Basa ${b.numero}  |  Lidera: ${b.lider}  |  Guanya: ${b.guanyador}  |  Punts: ${b.punts}\n`;
+                b.jugades.forEach(j => {
+                    const marca = j.jugador === b.guanyador ? " ◄" : "";
+                    txt += `    ${j.jugador.padEnd(6)}: ${j.carta}${marca}\n`;
+                });
+            });
+
+            // Resum de la mà
+            if (!ma.enCurs) {
+                txt += `\n  RESUM MÀ: Nosaltres ${ma.puntsNosaltres} pts  |  Ells ${ma.puntsElls} pts\n`;
+                const guanyadorMa = ma.puntsNosaltres > 36
+                    ? `Nosaltres +${(ma.puntsNosaltres - 36) * mult} pts globals`
+                    : ma.puntsElls > 36
+                        ? `Ells +${(ma.puntsElls - 36) * mult} pts globals`
+                        : "Empat (cap punt global)";
+                txt += `  Resultat: ${guanyadorMa}\n`;
+                txt += `  Marcador global → Nosaltres: ${ma.puntsGlobalsNosaltres}  |  Ells: ${ma.puntsGlobalsElls}\n`;
+            }
+            txt += "\n";
+        });
+
+        // Resum final de la partida
+        txt += sep + "\n";
+        txt += "  RESUM FINAL DE LA PARTIDA\n";
+        txt += sep + "\n";
+        const ultima = mans[mans.length - 1];
+        if (ultima) {
+            txt += `  Punts globals → Nosaltres: ${ultima.puntsGlobalsNosaltres}  |  Ells: ${ultima.puntsGlobalsElls}\n`;
+            if (ultima.puntsGlobalsNosaltres >= 101) txt += "  🏆 GUANYA: NOSALTRES\n";
+            else if (ultima.puntsGlobalsElls >= 101) txt += "  🏆 GUANYA: ELLS\n";
+            else txt += "  (Partida en curs)\n";
+        }
+        txt += sep + "\n";
+
+        // Descarregar
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `buti_registre_${new Date().toISOString().slice(0,10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
 
     function dibuixarMa() {
         const zona = document.getElementById('zona-jugador');
