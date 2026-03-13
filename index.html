@@ -99,7 +99,7 @@
         }
         #zona-jugador { height: 110px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 10px; width: 100%; }
         
-        /* === CARTES (NW i SE rectes) === */
+        /* === CARTES === */
         .carta { 
             width: 65px; height: 95px; background-color: var(--blanc-carta); border-radius: 8px; border: none;
             box-shadow: -4px 4px 10px rgba(0,0,0,0.25); display: flex; flex-direction: column; justify-content: space-between; 
@@ -172,8 +172,7 @@
             <button onclick="tancarEstadistiques()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; color: #cbd5e1; font-size: 2rem; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
             
             <h2 style="margin-top: 5px; margin-bottom: 15px;">📊 Fitxa de Jugador</h2>
-            <div class="llista-stats" id="contingut-stats">
-                </div>
+            <div class="llista-stats" id="contingut-stats"></div>
             <button class="boto-accio boto-verd" onclick="tancarEstadistiques()" style="width: 100%;">Tornar a la partida</button>
             <div style="margin-top: 15px; font-size: 0.75rem; color: rgba(255,255,255,0.3);">La Buti del Marc - v1.0</div>
         </div>
@@ -339,7 +338,6 @@
                 document.getElementById('info-oest').innerHTML = `Oest: <b>${window.maOest.length}</b>`; 
             }
             
-            // CARTES GENERADES DE CARA A L'USUARI
             window.generarHTMLCarta = function(carta) {
                 let numStr = carta.numero; let subIcona = "";
                 if(carta.numero === 10) subIcona = ICONA_SOTA; 
@@ -547,6 +545,7 @@
 
         function gestionarFaseContro() {
             try {
+                // FIXED BUG: Ens assegurem que utilitza window.maNord a la línia del let maBot a la funció jugarBot!
                 if (window.nivellContro === 3) { iniciarTorn(); return; } 
                 
                 let baseMult = (window.triomfActual === 'Botifarra') ? 2 : 1;
@@ -636,7 +635,6 @@
             iniciarAnimacioRepartiment4x4();
         }
 
-        // --- SUBFALLAR CORREGIT ---
         function esCartaLegal(cartaTest, maJugador, nomJugador) {
             if (window.cartesBasa.length === 0) return true;
             const nomCompany = { 'Sud': 'Nord', 'Nord': 'Sud', 'Est': 'Oest', 'Oest': 'Est' }[nomJugador];
@@ -817,7 +815,8 @@
         }
 
         function jugarBot(nomJugador) {
-            let maBot = (nomJugador === 'Est') ? window.maEst : (nomJugador === 'Nord') ? window.maBot : window.maOest;
+            // ERROR SOLUCIONAT: En lloc de window.maBot ara s'escull window.maNord quan toca!
+            let maBot = (nomJugador === 'Est') ? window.maEst : (nomJugador === 'Nord') ? window.maNord : window.maOest;
             let cartesLegals = maBot.filter(c => esCartaLegal(c, maBot, nomJugador));
             if (cartesLegals.length === 0) cartesLegals = maBot; 
             const cartaTiradaRef = triarMillorCarta(cartesLegals, nomJugador);
