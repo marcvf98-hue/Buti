@@ -125,10 +125,10 @@
 <body>
 
 <div id="pantalla-carrega">
-    <div id="logo-carrega" class="logo-cassoleta"></div>
+    <img src="icona.svg" id="logo-carrega" class="logo-cassoleta" alt="La Buti del Marc">
     <h1>LA BUTI<br>DEL MARC</h1>
     <p>Preparant taula...</p>
-    <div class="versio-app">VERSIÓ 1.3.2</div>
+    <div class="versio-app">VERSIÓ 1.4.0</div>
 </div>
 
 <div id="menu-cantar" class="modal-menu">
@@ -236,7 +236,6 @@
 
     window.onload = function() {
         carregarEstadistiques(); // Si falla, ara està atrapat i no bloquejarà la pantalla de càrrega
-        document.getElementById('logo-carrega').innerHTML = SVG_BOTIFARRA;
         document.getElementById('icona-passar').innerHTML = SVG_PASSAR;
         document.getElementById('botons-cantar-container').innerHTML = `
             <button class="boto-accio" onclick="establirTriomf('Oros','Oros')"><div class="icona-boto">${SVG_OROS}</div> Oros</button>
@@ -257,7 +256,7 @@
     function inicialitzarCodiJoc() {
         window.esperar = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         
-        /* [v1.3] SONS AMB LIMITACIÓ */
+        /* [v1.4] SONS AMB LIMITACIÓ */
         window.soActivat = true;
         window.SONS = {
             remenar: new Audio('sons/remenar.mp3'), repartir: new Audio('sons/repartir.mp3'),
