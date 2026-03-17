@@ -1,4 +1,4 @@
-const CACHE_NAME = 'buti-marc-v1.4'; // <-- Aquest canvi obliga a descarregar-ho de nou!
+const CACHE_NAME = 'buti-marc-v1.4';
 const urlsToCache = [
   './',
   './index.html',
@@ -15,7 +15,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // <-- Això també ajuda a actualitzar l'app més ràpid
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
