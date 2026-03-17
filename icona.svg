@@ -2,11 +2,36 @@
     <rect width="512" height="512" rx="110" fill="#042f2e"/>
     <rect x="20" y="20" width="472" height="472" rx="90" fill="none" stroke="#f59e0b" stroke-width="16"/>
     
-    <text x="256" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="200" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-10">BM</text>
-    
-    <g transform="translate(136, 330) scale(2.4)">
-        <rect x="15" y="35" width="70" height="26" rx="13" fill="#ef4444"/>
-        <path d="M 15 48 L 5 48 M 85 48 L 95 48" stroke="#fcd34d" stroke-width="6" stroke-linecap="round"/>
-        <path d="M 30 40 Q 50 50, 70 40" fill="none" stroke="#7f1d1d" stroke-width="3" opacity="0.5"/>
+    <text x="256" y="240" font-family="system-ui, -apple-system, sans-serif" font-size="230" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="central" letter-spacing="-10">BM</text>
+
+    <g id="botifarra">
+        <path d="M 80 320 L 256 140 L 432 320" fill="none" stroke="#fcd34d" stroke-width="4"/>
+        <circle cx="256" cy="130" r="9" fill="none" stroke="#fcd34d" stroke-width="4"/>
+        <circle cx="256" cy="140" r="4" fill="#fcd34d"/>
+
+        <path d="M 80 320 L 72 285 M 432 320 L 440 285" stroke="#ef4444" stroke-width="24" stroke-linecap="round"/>
+        
+        <path d="M 80 320 C 80 470, 432 470, 432 320" fill="none" stroke="#ef4444" stroke-width="56" stroke-linecap="round"/>
+        
+        <path d="M 96 325 C 96 450, 416 450, 416 325" fill="none" stroke="#7f1d1d" stroke-width="12" stroke-linecap="round" opacity="0.4"/>
+        
+        <path d="M 64 320 C 64 485, 448 485, 448 320" fill="none" stroke="#fca5a5" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+        
+        <circle cx="100" cy="355" r="5" fill="#fecaca" opacity="0.6"/>
+        <circle cx="130" cy="395" r="7" fill="#fecaca" opacity="0.5"/>
+        <circle cx="180" cy="425" r="6" fill="#fecaca" opacity="0.6"/>
+        <circle cx="230" cy="440" r="5" fill="#fecaca" opacity="0.5"/>
+        <circle cx="270" cy="435" r="8" fill="#fecaca" opacity="0.6"/>
+        <circle cx="320" cy="425" r="4" fill="#fecaca" opacity="0.5"/>
+        <circle cx="360" cy="395" r="6" fill="#fecaca" opacity="0.6"/>
+        <circle cx="400" cy="355" r="5" fill="#fecaca" opacity="0.5"/>
+        <circle cx="256" cy="415" r="4.5" fill="#fecaca" opacity="0.6"/>
+        <circle cx="155" cy="375" r="4" fill="#fecaca" opacity="0.5"/>
+        <circle cx="380" cy="375" r="5.5" fill="#fecaca" opacity="0.6"/>
+        
+        <line x1="45" y1="320" x2="115" y2="320" stroke="#fcd34d" stroke-width="6" stroke-linecap="round"/>
+        <line x1="397" y1="320" x2="467" y2="320" stroke="#fcd34d" stroke-width="6" stroke-linecap="round"/>
+        
+        <path d="M 80 320 Q 256 360 432 320" fill="none" stroke="#fcd34d" stroke-width="4"/>
     </g>
 </svg>
