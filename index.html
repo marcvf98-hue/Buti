@@ -79,6 +79,7 @@
             background: rgba(15,23,42,0.9); backdrop-filter: blur(4px); border-radius: 30px;
             padding: 6px 16px; border: 1px solid rgba(255,255,255,0.2); display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 200;
         }
+        /* [v1.3] FRASES FLOTANTS */
         .frase-flotant {
             position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(245, 158, 11, 0.95); color: #042f2e; padding: 10px 20px;
@@ -128,7 +129,7 @@
     <img src="icona.svg" id="logo-carrega" class="logo-cassoleta" alt="La Buti del Marc">
     <h1>LA BUTI<br>DEL MARC</h1>
     <p>Preparant taula...</p>
-    <div class="versio-app">VERSIÓ 1.4.0</div>
+    <div class="versio-app">VERSIÓ 1.4.1</div>
 </div>
 
 <div id="menu-cantar" class="modal-menu">
@@ -202,9 +203,14 @@
     const SVG_CONTRO = `<svg viewBox="0 0 100 100"><path d="M25 25 L75 75 M75 25 L25 75" stroke="currentColor" stroke-width="14" stroke-linecap="round"/></svg>`;
     const SVG_PASSAR = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="10" fill="none"/><path d="M30 30 L70 70" stroke="currentColor" stroke-width="10" stroke-linecap="round"/></svg>`;
     const SVG_RETURN = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0"/></svg>`;
-    const ICONA_SOTA = `<svg viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="50" rx="10" fill="currentColor"/><circle cx="50" cy="40" r="15" fill="#fff"/></svg>`;
+    
+    // ICONES DE FIGURES (Actualitzades)
+    const ICONA_SOTA = `<svg viewBox="0 0 100 100"><path d="M20 20 L80 20 L80 50 Q80 90 50 95 Q20 90 20 50 Z" fill="currentColor"/></svg>`;
     const ICONA_CAVALL = `<svg viewBox="0 0 100 100"><path d="M20 90 L30 40 Q 50 10, 80 30 L 80 50 L 60 40 L 50 90 Z" fill="currentColor"/></svg>`;
     const ICONA_REI = `<svg viewBox="0 0 100 100"><path d="M10 80 L20 20 L40 50 L50 10 L60 50 L80 20 L90 80 Z" fill="currentColor"/></svg>`;
+    const ICONA_MANILLA = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="16" fill="currentColor"/><path d="M50 18 L50 5 M50 82 L50 95 M18 50 L5 50 M82 50 L95 50 M27 27 L16 16 M73 73 L84 84 M27 73 L16 84 M73 27 L84 16" stroke="currentColor" stroke-width="8" stroke-linecap="round"/></svg>`;
+    const ICONA_AS = `<svg viewBox="0 0 100 100"><polygon points="50,10 61,40 95,40 68,60 79,90 50,70 21,90 32,60 5,40 39,40" fill="currentColor"/></svg>`;
+    
     const DICT_SVGS = { 'Oros': SVG_OROS, 'Copes': SVG_COPES, 'Espases': SVG_ESPASES, 'Bastos': SVG_BASTOS, 'Botifarra': SVG_BOTIFARRA };
 
     let appStats = { jugades: 0, guanyades: 0, perdudes: 0, puntsFavor: 0, puntsContra: 0, maxPunts: { punts: 0, data: '-' }, minPunts: { punts: 999, data: '-' } };
@@ -256,7 +262,7 @@
     function inicialitzarCodiJoc() {
         window.esperar = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         
-        /* [v1.4] SONS AMB LIMITACIÓ */
+        /* [v1.3] SONS AMB LIMITACIÓ */
         window.soActivat = true;
         window.SONS = {
             remenar: new Audio('sons/remenar.mp3'), repartir: new Audio('sons/repartir.mp3'),
@@ -341,9 +347,17 @@
     }
 
     function generarHTMLCarta(carta) {
-        let subIcona = carta.numero===10 ? ICONA_SOTA : carta.numero===11 ? ICONA_CAVALL : carta.numero===12 ? ICONA_REI : "";
+        let subIcona = carta.numero === 9 ? ICONA_MANILLA : 
+                       carta.numero === 1 ? ICONA_AS : 
+                       carta.numero === 12 ? ICONA_REI : 
+                       carta.numero === 11 ? ICONA_CAVALL : 
+                       carta.numero === 10 ? ICONA_SOTA : "";
+                       
         let marcaFigura = subIcona ? `<span class="simbol-figura" style="color:${carta.color}">${subIcona}</span>` : "";
-        return `<div class="carta-top" style="color:${carta.color}">${carta.numero}${marcaFigura}</div><div class="carta-centre">${carta.svg}</div><div class="carta-bottom" style="color:${carta.color}">${carta.numero}${marcaFigura}</div>`;
+        
+        return `<div class="carta-top" style="color:${carta.color}">${carta.numero}${marcaFigura}</div>
+                <div class="carta-centre">${carta.svg}</div>
+                <div class="carta-bottom" style="color:${carta.color}">${carta.numero}${marcaFigura}</div>`;
     }
 
     /* LÒGICA IA i JOC */
@@ -699,7 +713,7 @@
         cartaFinal.className = 'carta carta-jugada' + (carta.numero === 9 ? ' carta-manilla' : ''); cartaFinal.style.position = 'absolute';
         let oX = 0, oY = 0; if (posicioJugador === 'Sud') oY = 30; if (posicioJugador === 'Est') oX = 50; if (posicioJugador === 'Nord') oY = -30; if (posicioJugador === 'Oest') oX = -50;
         const rot = Math.floor(Math.random() * 20) - 10; cartaFinal.style.transform = `translate(${oX}px,${oY}px) scale(1.1) rotate(${rot}deg)`;
-        cartaFinal.innerHTML = generarHTMLCarta(carta); cartaFinal.style.zIndex = window.cartesBasa.length; tauler.appendChild(cartaFinal);
+        cartaFinal.innerHTML = window.generarHTMLCarta(carta); cartaFinal.style.zIndex = window.cartesBasa.length; tauler.appendChild(cartaFinal);
     }
 
     function jugarBot(nomJugador) {
@@ -751,7 +765,7 @@
             const esLegal = esCartaLegal(carta, window.maSud, 'Sud');
             if (!esLegal && window.estatJoc === "JUGANT" && window.tornActual === 'Sud' && window.cartesBasa.length > 0) cartaDiv.classList.add('carta-illegal');
             if (index === window.cartaSeleccionadaIndex && esLegal) { cartaDiv.classList.add('carta-seleccionada'); cartaDiv.style.zIndex = 50; }
-            cartaDiv.innerHTML = generarHTMLCarta(carta);
+            cartaDiv.innerHTML = window.generarHTMLCarta(carta);
             cartaDiv.onclick = () => { if (window.estatJoc !== "JUGANT") return; if (!esLegal) { window.reproduirSo('error'); return; } if (window.cartaSeleccionadaIndex === index) jugarCartaAmbAnimacio(index, cartaDiv); else { window.cartaSeleccionadaIndex = index; dibuixarMa(); } };
             cartaDiv.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cartaDiv.click(); } };
             zona.appendChild(cartaDiv);
